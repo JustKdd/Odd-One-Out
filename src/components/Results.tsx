@@ -45,12 +45,12 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
             clues: [],
             word: "",
             isImposter: false,
-            vote: undefined
+            vote: null
         }));
         // Ensure host is present in players array
         if (!updatedPlayers.some((p: any) => p.id === roomData.hostId)) {
             const hostName = (players.find(p => p.id === roomData.hostId)?.name) || "Host";
-            updatedPlayers = [...updatedPlayers, { id: roomData.hostId, name: hostName, clues: [], word: "", isImposter: false, vote: undefined }];
+            updatedPlayers = [...updatedPlayers, { id: roomData.hostId, name: hostName, clues: [], word: "", isImposter: false, vote: null }];
         }
         await updateDoc(roomRef, {
             phase: "lobby",

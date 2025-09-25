@@ -97,6 +97,7 @@ export default function Lobby({ setPlayers, setTheme, setHasImposter, setPhase, 
     };
     // Use players prop from App.tsx instead of local state
     // Join an existing room
+    const [joining, setJoining] = useState(false);
     const handleJoinRoom = async () => {
         if (!username.trim() || !roomId.trim()) return setError("Enter username and room code");
         if (!user) return setError("User not authenticated");
@@ -109,6 +110,8 @@ export default function Lobby({ setPlayers, setTheme, setHasImposter, setPhase, 
         const data = roomSnap.data();
         // If user is already in the room by id, just switch to lobby
         if (data.players.some((p: Player) => p.id === user.uid)) {
+            setRoomId(roomId);
+            localStorage.setItem("roomId", roomId);
             setMode("lobby");
             setError("");
             return;
@@ -122,13 +125,19 @@ export default function Lobby({ setPlayers, setTheme, setHasImposter, setPhase, 
         await updateDoc(roomRef, {
             players: arrayUnion({ id: user.uid, name: username, clues: [] })
         });
-        // No local state reset; Firestore listener will update all state
-        // Only set roomId and mode; Firestore listener will update all other state
         setRoomId(roomId);
         localStorage.setItem("roomId", roomId);
-        setMode("lobby");
+        setJoining(true);
         setError("");
     };
+
+    // After joining, wait for Firestore to show user in players, then switch to lobby
+    useEffect(() => {
+        if (joining && players.some((p) => user && p.id === user.uid)) {
+            setMode("lobby");
+            setJoining(false);
+        }
+    }, [joining, players, user]);
     // On mount, if user is already in a room, auto-switch to that room's lobby
     useEffect(() => {
         const checkExistingRoom = async () => {
