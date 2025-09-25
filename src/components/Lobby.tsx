@@ -171,9 +171,10 @@ export default function Lobby({ setPlayers, setTheme, setHasImposter, setPhase, 
             const imposterIdx = Math.floor(Math.random() * updatedPlayers.length);
             updatedPlayers = updatedPlayers.map((p: Player, idx: number) => {
                 if (idx === imposterIdx) {
-                    const { word, ...rest } = p;
-                    return { ...rest, isImposter: true, clues: [] };
+                    // Imposter: no word
+                    return { ...p, isImposter: true, word: "", clues: [] };
                 } else {
+                    // Not imposter: gets the word
                     return { ...p, isImposter: false, word: option, clues: [] };
                 }
             });

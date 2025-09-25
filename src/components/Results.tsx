@@ -38,12 +38,19 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
         const roomSnap = await getDoc(roomRef);
         if (!roomSnap.exists()) return setPhase("lobby");
         const data = roomSnap.data();
+        // Reset all player fields except id and name
+        let updatedPlayers = (data.players || []).map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            clues: [],
+            word: "",
+            isImposter: false,
+            vote: undefined
+        }));
         // Ensure host is present in players array
-        let updatedPlayers = data.players || [];
         if (!updatedPlayers.some((p: any) => p.id === roomData.hostId)) {
-            // Try to use the host's name from the original players array, fallback to "Host"
             const hostName = (players.find(p => p.id === roomData.hostId)?.name) || "Host";
-            updatedPlayers = [...updatedPlayers, { id: roomData.hostId, name: hostName, clues: [] }];
+            updatedPlayers = [...updatedPlayers, { id: roomData.hostId, name: hostName, clues: [], word: "", isImposter: false, vote: undefined }];
         }
         await updateDoc(roomRef, {
             phase: "lobby",

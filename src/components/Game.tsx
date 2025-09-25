@@ -86,7 +86,11 @@ export default function Game({ players, setPlayers, round, setRound, setPhase, t
         }
     };
 
-    const isMyTurn = me && players[turn].id === me.id;
+    const isMyTurn = me && players[turn] && players[turn].id === me.id;
+    // Defensive: if players is empty or turn is out of bounds, show nothing (or a fallback)
+    if (!players.length || !players[turn]) {
+        return null;
+    }
     return (
         <div className={styles.container}>
             <div className={styles.round}>Round {round}/3</div>
