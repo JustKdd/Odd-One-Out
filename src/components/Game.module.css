@@ -1,0 +1,117 @@
+.container {
+    position: relative;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, #f1f5f9 0%, #f3e8ff 100%);
+    border-radius: 2rem;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    border: 1.5px solid #cbd5e1;
+}
+
+.heading {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: #1e293b;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 8px #cbd5e1;
+}
+
+.input {
+    width: 100%;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 0.7rem;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.7rem;
+    font-size: 1rem;
+    transition: border 0.2s;
+}
+
+.input:focus {
+    border-color: #6366f1;
+    outline: none;
+}
+
+.button {
+    width: 100%;
+    background: linear-gradient(90deg, #a78bfa 0%, #f472b6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 0.9rem;
+    padding: 0.9rem;
+    font-weight: 700;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 16px #c7d2fe;
+    cursor: pointer;
+    margin-bottom: 1.1rem;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.button:hover {
+    background: linear-gradient(90deg, #7c3aed 0%, #f472b6 100%);
+    box-shadow: 0 6px 20px #a5b4fc;
+}
+
+.clueBox {
+    margin-bottom: 1.2rem;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px #e0e7ff;
+    padding: 0.7rem 1.2rem;
+    border: 1px solid #ede9fe;
+}
+
+.clueItem {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: #334155;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #ede9fe;
+}
+
+.clueItem:last-child {
+    border-bottom: none;
+}
+
+.avatar {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #f472b6;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px #fbcfe8;
+}
+
+.playerName {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.clueText {
+    font-style: italic;
+    color: #a21caf;
+}
+
+.round {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #a21caf;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.currentPlayer {
+    font-size: 1rem;
+    color: #be185d;
+    margin-bottom: 1.2rem;
+    text-align: center;
+}
