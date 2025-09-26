@@ -145,6 +145,7 @@ export default function LobbyRoom({
                         <option value="bg">Bulgarian</option>
                     </select>
                 </div>
+                {/* no imposter toggle; imposter is chosen at start with 80% probability */}
             </div>
             <ul className={styles.playersList} style={{ marginBottom: 18, marginTop: 0, background: '#fff', border: '1.5px solid #e0e7ff', boxShadow: '0 1px 6px #e0e7ff' }}>
                 {players.map((p) => {
@@ -160,6 +161,7 @@ export default function LobbyRoom({
                     );
                 })}
             </ul>
+
             <button
                 onClick={startGame}
                 className={styles.button + (!canStart ? ' ' + styles.disabled : '')}

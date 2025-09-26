@@ -1,62 +1,93 @@
-
 import { useState, useEffect } from "react";
 import { doc, onSnapshot, deleteDoc } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Player, Phase } from "./types";
+
 import Lobby from "./components/Lobby";
 import Game from "./components/Game";
 import Voting from "./components/Voting";
 import Results from "./components/Results";
 import Profile from "./components/Profile";
 
-
+import type { RoomData } from "./types";
 
 function App() {
-  const [phase, setPhase] = useState<Phase>("lobby");
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [hasImposter, setHasImposter] = useState<boolean>(false);
-  const [round, setRound] = useState<number>(1);
-  const [turn, setTurn] = useState<number>(0);
-  const [nickname, setNickname] = useState(() => localStorage.getItem("nickname") || "");
-  const [theme, setTheme] = useState<string>("");
-  const [themeLang, setThemeLang] = useState<string>("");
+  const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [roomId, setRoomId] = useState(() => localStorage.getItem("roomId") || "");
+  const [nickname, setNickname] = useState(() => localStorage.getItem("nickname") || "");
+  const [error, setError] = useState<string | null>(null);
 
-  // Firestore listener for all phases
+  // Firestore listener for room data
   useEffect(() => {
     if (!roomId) return;
+
     localStorage.setItem("roomId", roomId);
     const roomRef = doc(db, "rooms", roomId);
+
     const unsub = onSnapshot(roomRef, async (docSnap) => {
-      const data = docSnap.data();
-      if (data && data.players) {
-        setPlayers(data.players);
-        if (data.phase) setPhase(data.phase);
-        if (typeof data.hasImposter === "boolean") setHasImposter(data.hasImposter);
-        if (typeof data.theme === "string") setTheme(data.theme);
-        if (typeof data.themeLang === "string") setThemeLang(data.themeLang);
-        if (typeof data.turn === "number") setTurn(data.turn);
-        if (typeof data.round === "number") setRound(data.round);
-        // If the room is empty, delete it
-        if (data.players.length === 0) {
-          await deleteDoc(roomRef);
-          localStorage.removeItem("roomId");
-        }
-      } else {
-        // Room deleted or not found
+      if (!docSnap.exists()) {
+        // Room deleted
+        setError("This room no longer exists.");
         setRoomId("");
+        setRoomData(null);
         localStorage.removeItem("roomId");
-        setPhase("lobby");
+        return;
       }
+
+      const data = docSnap.data();
+      if (!data) return;
+
+      // Keep the full Firestore document as the single source of truth.
+      const parsed = {
+        ...(data as any),
+        id: roomId,
+        hasImposter: data.hasImposter ?? false,
+      } as RoomData;
+
+      // If room has no players, delete it
+      if (!parsed.players || parsed.players.length === 0) {
+        await deleteDoc(roomRef);
+        unsub(); // stop listening immediately
+        setRoomId("");
+        setRoomData(null);
+        localStorage.removeItem("roomId");
+        return;
+      }
+
+      setRoomData(parsed);
+      setError(null); // clear any stale errors
     });
+
     return () => unsub();
   }, [roomId]);
 
+  // Handle nickname setup
   const handleProfileSet = (name: string) => {
-    setNickname(name);
-    localStorage.setItem("nickname", name);
+    const cleanName = name.trim();
+    if (!cleanName) return; // prevent empty names
+    setNickname(cleanName);
+    localStorage.setItem("nickname", cleanName);
   };
 
+  // Helper to render the current phase
+  const renderPhase = () => {
+    if (!roomData) return <Lobby roomData={roomData} nickname={nickname} setRoomId={setRoomId} />;
+
+
+    switch (roomData.phase || 'lobby') {
+      case "lobby":
+        return <Lobby roomData={roomData} nickname={nickname} setRoomId={setRoomId} />;
+      case "game":
+        return <Game roomData={roomData} setRoomData={setRoomData} />;
+      case "voting":
+        return <Voting roomData={roomData} setRoomData={setRoomData} />;
+      case "results":
+        return <Results roomData={roomData} setRoomData={setRoomData} setRoomId={setRoomId} />;
+      default:
+        return null;
+    }
+  };
+
+  // Show profile setup first
   if (!nickname) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
@@ -67,42 +98,18 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      {phase === "lobby" && (
-        <Lobby
-          players={players}
-          setPlayers={setPlayers}
-          setTheme={setTheme}
-          setHasImposter={setHasImposter}
-          setPhase={setPhase}
-          setThemeLang={setThemeLang}
-          nickname={nickname}
-          setTurn={setTurn}
-          setRound={setRound}
-          theme={theme}
-          lang={themeLang}
-        />
-      )}
-      {phase === "game" && (
-        <Game
-          players={players}
-          setPlayers={setPlayers}
-          round={round}
-          setRound={setRound}
-          setPhase={setPhase}
-          theme={theme}
-          themeLang={themeLang}
-          turn={turn}
-        />
-      )}
-      {phase === "voting" && (
-        <Voting players={players} setPlayers={setPlayers} setPhase={setPhase} />
-      )}
-      {phase === "results" && (
-        <Results
-          players={players}
-          hasImposter={hasImposter}
-          setPhase={setPhase}
-        />
+      {error ? (
+        <div className="text-center text-red-600 bg-white p-4 rounded shadow">
+          <p className="mb-2">{error}</p>
+          <button
+            className="bg-red-500 text-white px-4 py-2 rounded"
+            onClick={() => setError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : (
+        renderPhase()
       )}
     </div>
   );

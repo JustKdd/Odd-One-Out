@@ -1,18 +1,21 @@
-import type { Player, Phase } from "../types";
+import type { Phase, RoomData } from "../types";
+import React from "react";
 import styles from "./Results.module.css";
-import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, getCurrentUser } from "../firebase";
-import { useRoomData } from "../hooks/useRoomData";
 
-type ResultsProps = {
-    players: Player[];
-    hasImposter: boolean;
-    setPhase: React.Dispatch<React.SetStateAction<Phase>>;
-};
 
-export default function Results({ players, hasImposter, setPhase }: ResultsProps) {
-    const roomId = localStorage.getItem("roomId") || "";
-    const { roomData, fetchRoom } = useRoomData(roomId);
+interface ResultsProps {
+    roomData: RoomData;
+    setRoomData?: React.Dispatch<React.SetStateAction<RoomData | null>>;
+    setPhase?: React.Dispatch<React.SetStateAction<Phase>>;
+    setRoomId?: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const Results: React.FC<ResultsProps> = ({ roomData, setRoomData, setPhase, setRoomId }) => {
+    const roomId = roomData.id;
+    const players = roomData.players;
+    const hasImposter = roomData.hasImposter;
 
     // Tally votes (including 'NO_IMPOSTER')
     const tally = new Map<string, number>();
@@ -30,14 +33,11 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
     // Play again handler: resets room in Firestore
     const handlePlayAgain = async () => {
         const user = getCurrentUser();
-        const roomId = localStorage.getItem("roomId") || "";
-        if (!user || !roomId || !roomData) return setPhase("lobby");
+        if (!user || !roomId || !roomData) return setPhase && setPhase("lobby");
         // Only host can reset
         if (roomData.hostId !== user.uid) return;
         const roomRef = doc(db, "rooms", roomId);
-        const roomSnap = await getDoc(roomRef);
-        if (!roomSnap.exists()) return setPhase("lobby");
-        const data = roomSnap.data();
+        const data = roomData;
         // Reset all player fields except id and name
         let updatedPlayers = (data.players || []).map((p: any) => ({
             id: p.id,
@@ -48,8 +48,8 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
             vote: null
         }));
         // Ensure host is present in players array
-        if (!updatedPlayers.some((p: any) => p.id === roomData.hostId)) {
-            const hostName = (players.find(p => p.id === roomData.hostId)?.name) || "Host";
+        if (!updatedPlayers.some((p) => p.id === roomData.hostId)) {
+            const hostName = (players.find((p) => p.id === roomData.hostId)?.name) || "Host";
             updatedPlayers = [...updatedPlayers, { id: roomData.hostId, name: hostName, clues: [], word: "", isImposter: false, vote: null }];
         }
         await updateDoc(roomRef, {
@@ -59,13 +59,31 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
             players: updatedPlayers,
             hostId: roomData.hostId
         });
-        setPhase("lobby");
-        fetchRoom(); // re-fetch to keep UI in sync
+        if (setPhase) setPhase("lobby");
     };
+    // Optionally, you can re-fetch room data here if needed
 
-    const handleReturnToHome = () => {
-        localStorage.removeItem("roomId"); // Clear room cache data
-        setPhase("lobby"); // Return to the lobby
+    const handleReturnToHome = async () => {
+        // Remove player from the room in Firestore so other players see them leave.
+        const user = getCurrentUser();
+        if (user && roomId) {
+            try {
+                const roomRef = doc(db, "rooms", roomId);
+                const updatedPlayers = (roomData.players || []).filter(p => p.id !== user.uid);
+                if (updatedPlayers.length === 0) {
+                    await deleteDoc(roomRef);
+                } else {
+                    await updateDoc(roomRef, { players: updatedPlayers });
+                }
+            } catch (e) {
+                // ignore errors - best effort cleanup
+            }
+        }
+        // Clear cached room id and local room state, then navigate home/menu.
+        localStorage.removeItem("roomId");
+        if (setRoomId) setRoomId("");
+        if (setRoomData) setRoomData(null);
+        if (setPhase) setPhase("lobby");
     };
 
     return (
@@ -151,10 +169,12 @@ export default function Results({ players, hasImposter, setPhase }: ResultsProps
             <button
                 onClick={handleReturnToHome}
                 className={styles.returnHomeBtn}
-                style={{ marginTop: 16, background: '#f87171', color: '#fff' }}
+                type="button"
             >
                 Return to Home
             </button>
         </div>
     );
-}
+};
+
+export default Results;
