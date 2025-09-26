@@ -29,7 +29,7 @@ const Lobby: React.FC<LobbyProps> = ({ roomData, nickname, setRoomId }: LobbyPro
     const [error, setError] = useState("");
     const [isHost, setIsHost] = useState(false);
     const [user, setUser] = useState<{ uid: string } | null>(null);
-
+    const [roomCode, setRoomCode] = useState("");
     // Track Firebase auth user
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, (firebaseUser) => {
@@ -179,8 +179,8 @@ const Lobby: React.FC<LobbyProps> = ({ roomData, nickname, setRoomId }: LobbyPro
             <LobbyJoin
                 username={username}
                 setUsername={setUsername}
-                roomId={roomId}
-                setRoomId={setRoomId}
+                roomId={roomCode}
+                setRoomId={setRoomCode}
                 onJoin={joinRoom}
                 onBack={() => setMode("menu")}
                 error={error}
