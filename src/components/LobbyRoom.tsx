@@ -4,6 +4,7 @@ import styles from "./Lobby.module.css";
 import type { Player } from "../types";
 import { db, getCurrentUser } from "../firebase";
 import { doc, updateDoc } from "firebase/firestore";
+import InstructionsModal from "./InstructionsModal";
 
 interface LobbyRoomProps {
     roomId: string;
@@ -40,6 +41,7 @@ export default function LobbyRoom({
     const [nicknameInput, setNicknameInput] = useState(username);
     const [updating, setUpdating] = useState(false);
     const nameChanged = nicknameInput.trim() && nicknameInput !== username;
+    const [showInstructions, setShowInstructions] = useState(false); // NEW state
 
     // Update nickname in Firestore and local players
     const handleUpdateNickname = async () => {
@@ -61,6 +63,15 @@ export default function LobbyRoom({
 
     return (
         <div className={styles.container}>
+            {showInstructions && (
+                <InstructionsModal onClose={() => setShowInstructions(false)} />
+            )}
+            <button
+                onClick={() => setShowInstructions(true)}
+                className="absolute top-4 right-4 bg-white p-2 rounded-full shadow hover:bg-gray-200"
+            >
+                ❓
+            </button>
             <h1 className={styles.heading}>Room Lobby</h1>
             <div className={styles.themeNote} style={{ textAlign: 'center', fontWeight: 600, fontSize: '1.1rem', marginBottom: 10 }}>
                 Room code: <b>{roomId}</b>

@@ -100,15 +100,25 @@ const Lobby: React.FC<LobbyProps> = ({ roomData, nickname, setRoomId }: LobbyPro
             setError("Not signed in yet. Try again shortly.");
             return;
         }
+
         try {
             const roomRef = doc(db, "rooms", joinId);
             const snap = await getDoc(roomRef);
+
             if (!snap.exists()) {
                 setError("Room not found");
                 return;
             }
+
+            const roomData = snap.data();
+
+            if (roomData.phase === "game") {
+                setError("Game already in progress. Please wait for the next round.");
+                return;
+            }
+
             const cleanName = username.trim() || "Player";
-            // Add player to the room
+
             await updateDoc(roomRef, {
                 players: arrayUnion({
                     id: user.uid,
@@ -119,6 +129,7 @@ const Lobby: React.FC<LobbyProps> = ({ roomData, nickname, setRoomId }: LobbyPro
                     vote: null,
                 }),
             });
+
             setRoomId(joinId);
             localStorage.setItem("roomId", joinId);
             setMode("lobby");

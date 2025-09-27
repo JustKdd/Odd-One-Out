@@ -9,6 +9,7 @@ import Results from "./components/Results";
 import Profile from "./components/Profile";
 
 import type { RoomData } from "./types";
+import Instructions from "./components/Instructions";
 
 function App() {
   const [roomData, setRoomData] = useState<RoomData | null>(null);
@@ -75,7 +76,8 @@ function App() {
 
     switch (roomData.phase || 'lobby') {
       case "lobby":
-        return <Lobby roomData={roomData} nickname={nickname} setRoomId={setRoomId} />;
+        return <Lobby roomData={roomData} nickname={nickname} setRoomId={setRoomId} />
+
       case "game":
         return <Game roomData={roomData} setRoomData={setRoomData} />;
       case "voting":
@@ -90,8 +92,11 @@ function App() {
   // Show profile setup first
   if (!nickname) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-        <Profile onProfileSet={handleProfileSet} />
+      <div className="space-y-4 " style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-around', flexDirection: 'row' }}>
+        <Instructions />
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+          <Profile onProfileSet={handleProfileSet} />
+        </div>
       </div>
     );
   }
